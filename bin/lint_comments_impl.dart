@@ -277,9 +277,41 @@ Future<int> _processPath(
         print('Running: bash $bashScriptPath ${scriptArgs.join(' ')} (from $packageRoot)');
       }
       try {
-        // Set working directory to the original caller's directory, but run the script from package root
-        result = await Process.run('bash', [bashScriptPath, ...scriptArgs],
-            workingDirectory: packageRoot);
+        // First try using Git Bash explicitly
+        String? gitBashPath;
+        final possibleGitBashPaths = [
+          'C:/Program Files/Git/bin/bash.exe',
+          'C:/Program Files (x86)/Git/bin/bash.exe',
+          'C:/Git/bin/bash.exe',
+        ];
+
+        for (final gitBashCandidate in possibleGitBashPaths) {
+          if (File(gitBashCandidate).existsSync()) {
+            gitBashPath = gitBashCandidate;
+            break;
+          }
+        }
+
+        if (gitBashPath != null) {
+          if (verbose) {
+            print('Using Git Bash at: $gitBashPath');
+          }
+          result = await Process.run(gitBashPath, [bashScriptPath, ...scriptArgs],
+              workingDirectory: packageRoot);
+        } else {
+          // Fall back to system bash (might be WSL) - convert paths to WSL format
+          final wslPackageRoot = _convertToWSLPath(packageRoot);
+          final wslScriptArgs = scriptArgs.map(_convertToWSLPath).toList();
+
+          if (verbose) {
+            print('Using system bash (possibly WSL)');
+            print('WSL package root: $wslPackageRoot');
+            print('WSL script args: ${wslScriptArgs.join(' ')}');
+          }
+
+          result = await Process.run('bash', [bashScriptPath, ...wslScriptArgs],
+              workingDirectory: wslPackageRoot);
+        }
       } catch (e) {
         print('Error: bash not found on Windows. Please install Git Bash or WSL.');
         return 1;
@@ -301,4 +333,15 @@ Future<int> _processPath(
     print('Error executing script: $e');
     return 1;
   }
+}
+
+/// Convert Windows path to WSL format
+String _convertToWSLPath(String windowsPath) {
+  if (!windowsPath.contains(':')) return windowsPath; // Already not a Windows path
+
+  return windowsPath
+      .replaceAll('\\', '/')
+      .replaceFirstMapped(RegExp(r'^([A-Za-z]):'), (match) {
+        return '/mnt/${match.group(1)!.toLowerCase()}';
+      });
 }
