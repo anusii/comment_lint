@@ -127,8 +127,50 @@ ${parser.usage}
 
 /// Find the comment_lint package root directory.
 String? _findPackageRoot() {
+  final scriptPath = Platform.script.toFilePath();
+
+  // Check if we're running from a snapshot (dependency scenario)
+  if (scriptPath.contains('.dart_tool${path.separator}pub${path.separator}bin') &&
+      scriptPath.endsWith('.snapshot')) {
+    // Running from snapshot, need to find the actual package in pub cache
+    // Get the current working directory (should be the consuming project)
+    final workingDir = Directory.current.path;
+
+    // Try to find the package in the local .dart_tool/package_config.json
+    final packageConfigPath = path.join(workingDir, '.dart_tool', 'package_config.json');
+    final packageConfigFile = File(packageConfigPath);
+
+    if (packageConfigFile.existsSync()) {
+      try {
+        final configContent = packageConfigFile.readAsStringSync();
+        // Look for comment_lint package entry
+        final regex = RegExp(r'"comment_lint"[^}]*"rootUri"\s*:\s*"([^"]+)"');
+        final match = regex.firstMatch(configContent);
+
+        if (match != null) {
+          var packagePath = match.group(1)!;
+          // Handle relative paths starting with ../
+          if (packagePath.startsWith('../')) {
+            packagePath = path.normalize(path.join(workingDir, '.dart_tool', packagePath));
+          }
+
+          // Verify this is actually the comment_lint package
+          final pubspec = File(path.join(packagePath, 'pubspec.yaml'));
+          if (pubspec.existsSync()) {
+            final content = pubspec.readAsStringSync();
+            if (content.contains('name: comment_lint')) {
+              return packagePath;
+            }
+          }
+        }
+      } catch (e) {
+        // Continue with other methods
+      }
+    }
+  }
+
   // First, try the development scenario - start from the current script location
-  var current = Directory(Platform.script.toFilePath()).parent;
+  var current = Directory(scriptPath).parent;
 
   while (current.path != current.parent.path) {
     final pubspec = File(path.join(current.path, 'pubspec.yaml'));
@@ -147,9 +189,6 @@ String? _findPackageRoot() {
 
   // If not found in development scenario, try to find it in pub cache
   // This happens when the package is installed as a dependency
-  final scriptPath = Platform.script.toFilePath();
-
-  // Check if we're running from pub cache (contains cache/git or cache/hosted)
   if (scriptPath.contains(path.join('cache', 'git')) ||
       scriptPath.contains(path.join('cache', 'hosted'))) {
     // Extract the package directory from the script path
