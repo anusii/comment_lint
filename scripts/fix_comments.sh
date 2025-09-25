@@ -28,9 +28,9 @@ done
 [[ "$2" == "--dry-run" || "$1" == "--dry-run" ]] && dry_run=true
 
 # Show header - simplified for better UX
-echo "🔍 Comment Lint"
+echo "Comment Lint"
 if [[ "$verbose" == true ]]; then
-    echo "================"
+    echo "============"
     echo "Target: $target"
     [[ "$dry_run" == true ]] && echo "Mode: DRY-RUN (no changes)" || echo "Mode: LIVE (files will be modified)"
 fi
@@ -200,20 +200,20 @@ fix_file() {
     # Apply changes and only show output if fixes were made or in verbose mode
     if [[ "$dry_run" == true ]]; then
         if [[ $fixes -gt 0 ]]; then
-            echo "🔧 $file_path"
+            echo "WOULD FIX: $file_path"
             echo "  Would apply $fixes fix(es)"
         elif [[ "$verbose" == true ]]; then
-            echo "✅ $file_path"
+            echo "PASS: $file_path"
             echo "  No changes needed"
         fi
     else
         if [[ $fixes -gt 0 ]]; then
             # Write directly to file in one operation
             echo -n "$output" > "$file_path"
-            echo "🔧 $file_path"
+            echo "FIXED: $file_path"
             echo "  Applied $fixes fix(es)"
         elif [[ "$verbose" == true ]]; then
-            echo "✅ $file_path"
+            echo "PASS: $file_path"
             echo "  No changes needed"
         fi
     fi
@@ -230,7 +230,7 @@ if [[ -f "$target" ]]; then
     total_fixes=$?
     files_processed=1
 elif [[ -d "$target" ]]; then
-    echo "📁 Scanning: $target"
+    [[ "$verbose" == true ]] && echo "Scanning: $target"
     for dart_file in $(find "$target" -name "*.dart" ! -name "*.g.dart" 2>/dev/null); do
         if [[ -f "$dart_file" ]]; then
             fix_file "$dart_file"
@@ -245,26 +245,26 @@ else
 fi
 
 echo ""
-echo "📊 Summary:"
-echo "==========="
+echo "Summary:"
+echo "========"
 if [[ "$verbose" == true ]]; then
-    echo "📁 Files processed: $files_processed"
+    echo "Files processed: $files_processed"
 fi
 if [[ "$dry_run" == true ]]; then
     if [[ $total_fixes -gt 0 ]]; then
-        echo "🔧 Fixes that would be applied: $total_fixes"
+        echo "Fixes that would be applied: $total_fixes"
         echo ""
-        echo "💡 Run without --dry-run to apply fixes"
+        echo "Run without --dry-run to apply fixes"
     else
-        echo "✅ No comment style issues found!"
+        echo "No comment style issues found!"
     fi
 else
     if [[ $total_fixes -gt 0 ]]; then
-        echo "🔧 Fixes applied: $total_fixes"
+        echo "Fixes applied: $total_fixes"
         echo ""
-        echo "✅ Comment style violations have been automatically fixed!"
-        echo "📝 Review changes before committing."
+        echo "Comment style violations have been automatically fixed!"
+        echo "Review changes before committing."
     else
-        echo "✅ No comment style issues found!"
+        echo "No comment style issues found!"
     fi
 fi

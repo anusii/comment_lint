@@ -16,10 +16,10 @@ for arg in "$@"; do
     esac
 done
 
-# Modern header with emoji
-echo "🔍 Comment Lint (Check Mode)"
+# Clean header
+echo "Comment Lint (Check Mode)"
 if [[ "$verbose" == true ]]; then
-    echo "=========================="
+    echo "========================="
     echo "Target: $target"
 fi
 echo ""
@@ -173,10 +173,10 @@ lint_file() {
 
     # Only show output if violations found or in verbose mode
     if [[ $file_violations -gt 0 ]]; then
-        echo "🚨 $file_path"
+        echo "FAIL: $file_path"
         echo "  Found $file_violations violation(s)"
     elif [[ "$verbose" == true ]]; then
-        echo "✅ $file_path"
+        echo "PASS: $file_path"
         echo "  No violations found"
     fi
 }
@@ -185,27 +185,27 @@ lint_file() {
 if [[ -f "$target" ]]; then
     lint_file "$target"
 elif [[ -d "$target" ]]; then
-    [[ "$verbose" == true ]] && echo "📁 Scanning: $target"
+    [[ "$verbose" == true ]] && echo "Scanning: $target"
     for dart_file in $(find "$target" -name "*.dart" ! -name "*.g.dart" 2>/dev/null); do
         [[ -f "$dart_file" ]] && lint_file "$dart_file"
     done
 else
-    echo "❌ Error: Target '$target' not found"
+    echo "Error: Target '$target' not found"
     exit 1
 fi
 
 echo ""
-echo "📊 Summary:"
-echo "==========="
+echo "Summary:"
+echo "========"
 if [[ "$verbose" == true ]]; then
-    echo "📁 Files checked: $files_checked"
+    echo "Files checked: $files_checked"
 fi
 if [[ $violations -eq 0 ]]; then
-    echo "✅ No comment style violations found!"
+    echo "No comment style violations found!"
 else
-    echo "🚨 Found $violations violation(s) in $files_checked file(s)"
+    echo "Found $violations violation(s) in $files_checked file(s)"
     echo ""
-    echo "💡 Run 'dart run comment_lint --fix' to automatically fix these issues"
+    echo "Run 'dart run comment_lint --fix' to automatically fix these issues"
 fi
 
 [[ $violations -eq 0 ]] && exit 0 || exit 1
