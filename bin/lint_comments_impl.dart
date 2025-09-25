@@ -144,11 +144,17 @@ String? _findPackageRoot() {
       try {
         final configContent = packageConfigFile.readAsStringSync();
         // Look for comment_lint package entry
-        final regex = RegExp(r'"comment_lint"[^}]*"rootUri"\s*:\s*"([^"]+)"');
+        final regex = RegExp(r'"comment_lint"[^}]*"rootUri"\s*:\s*"([^"]+)"', dotAll: true);
         final match = regex.firstMatch(configContent);
 
         if (match != null) {
           var packagePath = match.group(1)!;
+
+          // Handle file:// URI prefix
+          if (packagePath.startsWith('file://')) {
+            packagePath = Uri.parse(packagePath).toFilePath();
+          }
+
           // Handle relative paths starting with ../
           if (packagePath.startsWith('../')) {
             packagePath = path.normalize(path.join(workingDir, '.dart_tool', packagePath));
