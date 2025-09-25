@@ -125,7 +125,7 @@ ${parser.usage}
 
 /// Find the comment_lint package root directory.
 String? _findPackageRoot() {
-  // Start from the current script location and work upward.
+  // First, try the development scenario - start from the current script location
   var current = Directory(Platform.script.toFilePath()).parent;
 
   while (current.path != current.parent.path) {
@@ -141,6 +141,28 @@ String? _findPackageRoot() {
       }
     }
     current = current.parent;
+  }
+
+  // If not found in development scenario, try to find it in pub cache
+  // This happens when the package is installed as a dependency
+  final scriptPath = Platform.script.toFilePath();
+
+  // Check if we're running from pub cache (contains cache/git or cache/hosted)
+  if (scriptPath.contains(path.join('cache', 'git')) ||
+      scriptPath.contains(path.join('cache', 'hosted'))) {
+    // Extract the package directory from the script path
+    final scriptDir = Directory(scriptPath).parent.parent;
+    final pubspec = File(path.join(scriptDir.path, 'pubspec.yaml'));
+    if (pubspec.existsSync()) {
+      try {
+        final content = pubspec.readAsStringSync();
+        if (content.contains('name: comment_lint')) {
+          return scriptDir.path;
+        }
+      } catch (e) {
+        // Continue to return null
+      }
+    }
   }
 
   return null;
