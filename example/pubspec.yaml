@@ -1,0 +1,17 @@
+name: comment_lint_example
+description: Example usage of comment_lint package.
+version: 1.0.0
+
+environment:
+  sdk: ">=3.2.3 <4.0.0"
+  flutter: ">=3.16.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  comment_lint:
+    path: ../

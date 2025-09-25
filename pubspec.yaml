@@ -1,0 +1,20 @@
+name: comment_lint
+description: "A custom lint tool for enforcing comment style in Dart files."
+version: 0.1.0
+repository: https://github.com/anusii/comment-lint
+
+environment:
+  sdk: ">=3.2.3 <4.0.0"
+
+dependencies:
+  args: ^2.4.2
+  path: ^1.8.0
+  yaml: ^3.1.3
+
+executables:
+  comment_lint: comment_lint
+
+dev_dependencies:
+  flutter:
+    sdk: flutter
+  test: ^1.24.0
