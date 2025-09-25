@@ -5,11 +5,23 @@
 target="${1:-lib/}"
 violations=0
 files_checked=0
+verbose=false
 
-# Remove the project-specific header since this is now a generic package
-echo "Comment Linter"
-echo "=============="
-echo "Target: $target"
+# Parse arguments
+for arg in "$@"; do
+    case $arg in
+        --verbose)
+            verbose=true
+            ;;
+    esac
+done
+
+# Modern header with emoji
+echo "🔍 Comment Lint (Check Mode)"
+if [[ "$verbose" == true ]]; then
+    echo "=========================="
+    echo "Target: $target"
+fi
 echo ""
 
 should_ignore_line() {
@@ -48,9 +60,6 @@ lint_file() {
     local file_path="$1"
     [[ "$file_path" =~ \.g\.dart$ ]] && return 0
     [[ ! -f "$file_path" ]] && return 0
-
-    echo "Checking: $file_path"
-    ((files_checked++))
 
     local file_violations=0
     local line_num=1
@@ -160,11 +169,15 @@ lint_file() {
     done
 
     violations=$((violations + file_violations))
+    ((files_checked++))
 
-    if [[ $file_violations -eq 0 ]]; then
-        echo "  ✓ No violations found"
-    else
+    # Only show output if violations found or in verbose mode
+    if [[ $file_violations -gt 0 ]]; then
+        echo "🚨 $file_path"
         echo "  Found $file_violations violation(s)"
+    elif [[ "$verbose" == true ]]; then
+        echo "✅ $file_path"
+        echo "  No violations found"
     fi
 }
 
@@ -172,15 +185,27 @@ lint_file() {
 if [[ -f "$target" ]]; then
     lint_file "$target"
 elif [[ -d "$target" ]]; then
-    echo "Scanning directory: $target"
+    [[ "$verbose" == true ]] && echo "📁 Scanning: $target"
     for dart_file in $(find "$target" -name "*.dart" ! -name "*.g.dart" 2>/dev/null); do
         [[ -f "$dart_file" ]] && lint_file "$dart_file"
     done
 else
-    echo "Error: Target not found"
+    echo "❌ Error: Target '$target' not found"
     exit 1
 fi
 
 echo ""
-echo "Summary: $violations violation(s) in $files_checked file(s)"
+echo "📊 Summary:"
+echo "==========="
+if [[ "$verbose" == true ]]; then
+    echo "📁 Files checked: $files_checked"
+fi
+if [[ $violations -eq 0 ]]; then
+    echo "✅ No comment style violations found!"
+else
+    echo "🚨 Found $violations violation(s) in $files_checked file(s)"
+    echo ""
+    echo "💡 Run 'dart run comment_lint --fix' to automatically fix these issues"
+fi
+
 [[ $violations -eq 0 ]] && exit 0 || exit 1

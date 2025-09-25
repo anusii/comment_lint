@@ -223,12 +223,12 @@ String? _findPackageRoot() {
 
 /// Process a single path (file or directory).
 Future<int> _processPath(
-    String targetPath,
-    String scriptsDir,
-    String packageRoot, {
-    required bool checkOnly,
-    required bool dryRun,
-    required bool verbose,
+  String targetPath,
+  String scriptsDir,
+  String packageRoot, {
+  required bool checkOnly,
+  required bool dryRun,
+  required bool verbose,
 }) async {
   // Determine which script to use.
   final scriptName = checkOnly ? 'lint_comments.sh' : 'fix_comments.sh';
