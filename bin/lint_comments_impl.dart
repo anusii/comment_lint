@@ -74,6 +74,8 @@ void main(List<String> args) async {
     if (verbose) {
       print('Debug: check=${argResults['check']}, set-exit-if-changed=${argResults['set-exit-if-changed']}, dry-run=${argResults['dry-run']}');
       print('Debug: checkOnly=$checkOnly, dryRun=$dryRun');
+      print('Debug: Platform.script = ${Platform.script}');
+      print('Debug: Platform.script.toFilePath() = ${Platform.script.toFilePath()}');
     }
 
     // Find the package root directory to locate scripts.
