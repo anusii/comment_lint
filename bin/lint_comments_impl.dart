@@ -234,13 +234,20 @@ Future<int> _processPath(
     return 1;
   }
 
+  // Convert target path to absolute path if it's not already
+  final absoluteTargetPath = path.isAbsolute(targetPath)
+      ? targetPath
+      : path.join(Directory.current.path, targetPath);
+
   if (verbose) {
     print('Script path: $scriptPath');
     print('Script exists: ${scriptFile.existsSync()}');
+    print('Target path (original): $targetPath');
+    print('Target path (absolute): $absoluteTargetPath');
   }
 
   // Prepare arguments for the script.
-  final scriptArgs = <String>[targetPath];
+  final scriptArgs = <String>[absoluteTargetPath];
   if (dryRun && !checkOnly) {
     scriptArgs.add('--dry-run');
   }
@@ -263,7 +270,7 @@ Future<int> _processPath(
         print('Running: bash $bashScriptPath ${scriptArgs.join(' ')} (from $packageRoot)');
       }
       try {
-        // Set working directory to the package root when running the script
+        // Set working directory to the original caller's directory, but run the script from package root
         result = await Process.run('bash', [bashScriptPath, ...scriptArgs],
             workingDirectory: packageRoot);
       } catch (e) {
