@@ -27,26 +27,25 @@ library;
 import 'dart:io';
 
 import 'package:args/args.dart';
-import 'package:yaml/yaml.dart';
 
 import 'lint_comments_impl.dart' as lint_impl;
 
 void main(List<String> args) {
   final parser = ArgParser()
     ..addFlag('help',
-        abbr: 'h', negatable: false, help: 'Print usage information')
+        abbr: 'h', negatable: false, help: 'Print usage information',)
     ..addFlag('verbose',
-        abbr: 'v', negatable: false, help: 'Show verbose output')
+        abbr: 'v', negatable: false, help: 'Show verbose output',)
     ..addFlag('set-exit-if-changed',
         negatable: false,
         help:
-            'Return exit code 1 if comments would be changed (like dart format)')
+            'Return exit code 1 if comments would be changed (like dart format)',)
     ..addFlag('check',
         abbr: 'c',
         negatable: false,
         help:
-            'Check comment style without fixing (same as --set-exit-if-changed)')
-    ..addFlag('dry-run', negatable: false, help: 'Same as --check');
+            'Check comment style without fixing (same as --set-exit-if-changed)',)
+    ..addFlag('dry-run', negatable: false, help: 'Same as --check',);
 
   try {
     final argResults = parser.parse(args);

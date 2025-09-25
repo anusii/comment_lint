@@ -72,10 +72,12 @@ void main(List<String> args) async {
     final dryRun = argResults['dry-run'] as bool;
 
     if (verbose) {
-      print('Debug: check=${argResults['check']}, set-exit-if-changed=${argResults['set-exit-if-changed']}, dry-run=${argResults['dry-run']}');
+      print(
+          'Debug: check=${argResults['check']}, set-exit-if-changed=${argResults['set-exit-if-changed']}, dry-run=${argResults['dry-run']}');
       print('Debug: checkOnly=$checkOnly, dryRun=$dryRun');
       print('Debug: Platform.script = ${Platform.script}');
-      print('Debug: Platform.script.toFilePath() = ${Platform.script.toFilePath()}');
+      print(
+          'Debug: Platform.script.toFilePath() = ${Platform.script.toFilePath()}');
     }
 
     // Find the package root directory to locate scripts.
@@ -130,21 +132,24 @@ String? _findPackageRoot() {
   final scriptPath = Platform.script.toFilePath();
 
   // Check if we're running from a snapshot (dependency scenario)
-  if (scriptPath.contains('.dart_tool${path.separator}pub${path.separator}bin') &&
+  if (scriptPath
+          .contains('.dart_tool${path.separator}pub${path.separator}bin') &&
       scriptPath.endsWith('.snapshot')) {
     // Running from snapshot, need to find the actual package in pub cache
     // Get the current working directory (should be the consuming project)
     final workingDir = Directory.current.path;
 
     // Try to find the package in the local .dart_tool/package_config.json
-    final packageConfigPath = path.join(workingDir, '.dart_tool', 'package_config.json');
+    final packageConfigPath =
+        path.join(workingDir, '.dart_tool', 'package_config.json');
     final packageConfigFile = File(packageConfigPath);
 
     if (packageConfigFile.existsSync()) {
       try {
         final configContent = packageConfigFile.readAsStringSync();
         // Look for comment_lint package entry
-        final regex = RegExp(r'"comment_lint"[^}]*"rootUri"\s*:\s*"([^"]+)"', dotAll: true);
+        final regex = RegExp(r'"comment_lint"[^}]*"rootUri"\s*:\s*"([^"]+)"',
+            dotAll: true);
         final match = regex.firstMatch(configContent);
 
         if (match != null) {
@@ -157,7 +162,8 @@ String? _findPackageRoot() {
 
           // Handle relative paths starting with ../
           if (packagePath.startsWith('../')) {
-            packagePath = path.normalize(path.join(workingDir, '.dart_tool', packagePath));
+            packagePath = path
+                .normalize(path.join(workingDir, '.dart_tool', packagePath));
           }
 
           // Verify this is actually the comment_lint package
@@ -217,12 +223,13 @@ String? _findPackageRoot() {
 
 /// Process a single path (file or directory).
 Future<int> _processPath(
-  String targetPath,
-  String scriptsDir,
-  String packageRoot,
-  {required bool checkOnly,
-  required bool dryRun,
-  required bool verbose}) async {
+    String targetPath,
+    String scriptsDir,
+    String packageRoot, {
+    required bool checkOnly,
+    required bool dryRun,
+    required bool verbose,
+}) async {
   // Determine which script to use.
   final scriptName = checkOnly ? 'lint_comments.sh' : 'fix_comments.sh';
   final scriptPath = path.join(scriptsDir, scriptName);
@@ -257,6 +264,9 @@ Future<int> _processPath(
   if (dryRun && !checkOnly) {
     scriptArgs.add('--dry-run');
   }
+  if (verbose) {
+    scriptArgs.add('--verbose');
+  }
 
   try {
     // Make the script executable (Unix/Linux/macOS).
@@ -274,7 +284,8 @@ Future<int> _processPath(
         print('Relative script path: $relativePath');
         print('Bash script path: $bashScriptPath');
         print('Script args: ${scriptArgs.join(' ')}');
-        print('Running: bash $bashScriptPath ${scriptArgs.join(' ')} (from $packageRoot)');
+        print(
+            'Running: bash $bashScriptPath ${scriptArgs.join(' ')} (from $packageRoot)');
       }
       try {
         // First try using Git Bash explicitly
@@ -296,7 +307,8 @@ Future<int> _processPath(
           if (verbose) {
             print('Using Git Bash at: $gitBashPath');
           }
-          result = await Process.run(gitBashPath, [bashScriptPath, ...scriptArgs],
+          result = await Process.run(
+              gitBashPath, [bashScriptPath, ...scriptArgs],
               workingDirectory: packageRoot);
         } else {
           // Fall back to system bash (might be WSL) - convert paths to WSL format
@@ -313,7 +325,8 @@ Future<int> _processPath(
               workingDirectory: wslPackageRoot);
         }
       } catch (e) {
-        print('Error: bash not found on Windows. Please install Git Bash or WSL.');
+        print(
+            'Error: bash not found on Windows. Please install Git Bash or WSL.');
         return 1;
       }
     } else {
@@ -337,11 +350,12 @@ Future<int> _processPath(
 
 /// Convert Windows path to WSL format
 String _convertToWSLPath(String windowsPath) {
-  if (!windowsPath.contains(':')) return windowsPath; // Already not a Windows path
+  if (!windowsPath.contains(':'))
+    return windowsPath; // Already not a Windows path
 
   return windowsPath
       .replaceAll('\\', '/')
       .replaceFirstMapped(RegExp(r'^([A-Za-z]):'), (match) {
-        return '/mnt/${match.group(1)!.toLowerCase()}';
-      });
+    return '/mnt/${match.group(1)!.toLowerCase()}';
+  });
 }

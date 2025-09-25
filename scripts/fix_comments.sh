@@ -10,12 +10,30 @@
 
 target="${1:-lib/}"
 dry_run=false
+verbose=false
+
+# Parse arguments
+for arg in "$@"; do
+    case $arg in
+        --dry-run)
+            dry_run=true
+            ;;
+        --verbose)
+            verbose=true
+            ;;
+    esac
+done
+
+# Handle legacy argument parsing
 [[ "$2" == "--dry-run" || "$1" == "--dry-run" ]] && dry_run=true
 
-echo "Comment Auto-Fix"
-echo "================"
-echo "Target: $target"
-[[ "$dry_run" == true ]] && echo "Mode: DRY-RUN (no changes)" || echo "Mode: LIVE (files will be modified)"
+# Show header - simplified for better UX
+echo "🔍 Comment Lint"
+if [[ "$verbose" == true ]]; then
+    echo "================"
+    echo "Target: $target"
+    [[ "$dry_run" == true ]] && echo "Mode: DRY-RUN (no changes)" || echo "Mode: LIVE (files will be modified)"
+fi
 echo ""
 
 should_ignore_line() {
@@ -55,7 +73,8 @@ fix_file() {
     [[ "$file_path" =~ \.g\.dart$ ]] && return 0
     [[ ! -f "$file_path" ]] && return 0
 
-    echo "Processing: $file_path"
+    # Only show processing message in verbose mode (removed for cleaner output)
+    # [[ "$verbose" == true ]] && echo "Processing: $file_path"
 
     local fixes=0
     local prev_line=""
@@ -138,14 +157,21 @@ fix_file() {
                         # Don't add period for continuation comments
                         :
                     elif [[ -n "$content" ]] && [[ ! "$content" =~ [.!?]$ ]]; then
-                        # Add period for single-line comment
-                        processed_line="${line}."
+                        # Add period for single-line comment - ensure it's added to the same line
+                        processed_line="${line%$'\r'}."
+                        if [[ "$line" =~ $'\r'$ ]]; then
+                            processed_line="${processed_line}"$'\r'
+                        fi
                         ((fixes++))
                         [[ "$dry_run" == true ]] && echo "  Would add period to comment" >&2
                     fi
                 # For regular single-line comments, add period if missing
                 elif [[ -n "$content" ]] && [[ ! "$content" =~ [.!?]$ ]]; then
-                    processed_line="${line}."
+                    # Add period for regular single-line comment - ensure it's added to the same line
+                    processed_line="${line%$'\r'}."
+                    if [[ "$line" =~ $'\r'$ ]]; then
+                        processed_line="${processed_line}"$'\r'
+                    fi
                     ((fixes++))
                     [[ "$dry_run" == true ]] && echo "  Would add period to comment" >&2
                 fi
@@ -171,13 +197,25 @@ fix_file() {
         prev_was_ignore=$current_is_ignore
     done
 
-    # Apply changes
+    # Apply changes and only show output if fixes were made or in verbose mode
     if [[ "$dry_run" == true ]]; then
-        echo "  Would apply $fixes fix(es)"
+        if [[ $fixes -gt 0 ]]; then
+            echo "🔧 $file_path"
+            echo "  Would apply $fixes fix(es)"
+        elif [[ "$verbose" == true ]]; then
+            echo "✅ $file_path"
+            echo "  No changes needed"
+        fi
     else
-        # Write directly to file in one operation
-        echo -n "$output" > "$file_path"
-        echo "  Applied $fixes fix(es)"
+        if [[ $fixes -gt 0 ]]; then
+            # Write directly to file in one operation
+            echo -n "$output" > "$file_path"
+            echo "🔧 $file_path"
+            echo "  Applied $fixes fix(es)"
+        elif [[ "$verbose" == true ]]; then
+            echo "✅ $file_path"
+            echo "  No changes needed"
+        fi
     fi
 
     return $fixes
@@ -192,7 +230,7 @@ if [[ -f "$target" ]]; then
     total_fixes=$?
     files_processed=1
 elif [[ -d "$target" ]]; then
-    echo "Scanning directory: $target"
+    echo "📁 Scanning: $target"
     for dart_file in $(find "$target" -name "*.dart" ! -name "*.g.dart" 2>/dev/null); do
         if [[ -f "$dart_file" ]]; then
             fix_file "$dart_file"
@@ -207,18 +245,26 @@ else
 fi
 
 echo ""
-echo "Summary:"
-echo "========"
-echo "Files processed: $files_processed"
+echo "📊 Summary:"
+echo "==========="
+if [[ "$verbose" == true ]]; then
+    echo "📁 Files processed: $files_processed"
+fi
 if [[ "$dry_run" == true ]]; then
-    echo "Fixes that would be applied: $total_fixes"
-    echo ""
-    echo "Run without --dry-run to apply fixes"
-else
-    echo "Fixes applied: $total_fixes"
     if [[ $total_fixes -gt 0 ]]; then
+        echo "🔧 Fixes that would be applied: $total_fixes"
         echo ""
-        echo "✓ Comment style violations have been automatically fixed!"
-        echo "Review changes before committing."
+        echo "💡 Run without --dry-run to apply fixes"
+    else
+        echo "✅ No comment style issues found!"
+    fi
+else
+    if [[ $total_fixes -gt 0 ]]; then
+        echo "🔧 Fixes applied: $total_fixes"
+        echo ""
+        echo "✅ Comment style violations have been automatically fixed!"
+        echo "📝 Review changes before committing."
+    else
+        echo "✅ No comment style issues found!"
     fi
 fi
