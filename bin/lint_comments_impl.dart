@@ -239,15 +239,21 @@ Future<int> _processPath(
       ? targetPath
       : path.join(Directory.current.path, targetPath);
 
+  // Prepare arguments for the script.
+  // Convert Windows paths to Unix-style for bash compatibility
+  final bashTargetPath = Platform.isWindows
+      ? absoluteTargetPath.replaceAll('\\', '/')
+      : absoluteTargetPath;
+
   if (verbose) {
     print('Script path: $scriptPath');
     print('Script exists: ${scriptFile.existsSync()}');
     print('Target path (original): $targetPath');
     print('Target path (absolute): $absoluteTargetPath');
+    print('Target path (bash): $bashTargetPath');
   }
 
-  // Prepare arguments for the script.
-  final scriptArgs = <String>[absoluteTargetPath];
+  final scriptArgs = <String>[bashTargetPath];
   if (dryRun && !checkOnly) {
     scriptArgs.add('--dry-run');
   }
@@ -267,6 +273,7 @@ Future<int> _processPath(
       if (verbose) {
         print('Relative script path: $relativePath');
         print('Bash script path: $bashScriptPath');
+        print('Script args: ${scriptArgs.join(' ')}');
         print('Running: bash $bashScriptPath ${scriptArgs.join(' ')} (from $packageRoot)');
       }
       try {
