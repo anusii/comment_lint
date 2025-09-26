@@ -178,18 +178,7 @@ fix_file() {
             fi
         fi
 
-        # Add blank line if needed (between previous comment and current non-comment)
-        # BUT NOT after ignore directives
-        if [[ "$prev_was_comment" == true ]] && [[ "$prev_was_ignore" == false ]] &&
-           [[ "$current_is_comment" == false ]] &&
-           [[ -n "$processed_line" ]] && [[ ! "$processed_line" =~ ^[[:space:]]*$ ]] &&
-           [[ ! "$processed_line" =~ ^[[:space:]]*// ]]; then
-            if [[ -n "$prev_line" ]] && [[ ! "$prev_line" =~ ^[[:space:]]*$ ]]; then
-                output+=$'\n'
-                ((fixes++))
-                [[ "$dry_run" == true ]] && echo "  Would add blank line before code" >&2
-            fi
-        fi
+        # Don't add blank lines - let dart format handle spacing
 
         output+="$processed_line"$'\n'
         prev_line="$processed_line"

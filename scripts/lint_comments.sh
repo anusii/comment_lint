@@ -152,15 +152,7 @@ lint_file() {
             fi
             prev_was_comment=true
         else
-            # Check for missing blank line after comment (but NOT after ignore directives)
-            if [[ "$prev_was_comment" == true ]] && [[ "$prev_was_ignore" == false ]] &&
-               [[ -n "$line" ]] && [[ ! "$line" =~ ^[[:space:]]*$ ]] &&
-               [[ ! "$line" =~ ^[[:space:]]*// ]]; then
-                if [[ -n "$prev_line" ]] && [[ ! "$prev_line" =~ ^[[:space:]]*$ ]]; then
-                    echo "  Line $line_num: Missing blank line after comment"
-                    ((file_violations++))
-                fi
-            fi
+            # Don't check for blank lines - let dart format handle spacing
             prev_was_comment=false
             prev_was_ignore=false
         fi
